@@ -1,5 +1,6 @@
 package com.utils;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,7 +8,10 @@ import java.util.List;
  * Attributes wrapper for understanding the online aggregation query.
  * @author Qiao Jin
  */
-public class AttributeGroup {
+public class AttributeGroup implements Serializable {
+
+	private static final long serialVersionUID = 1147267305545557673L;
+
 	// Spark online aggregation method name.
 	private String operatorName;
 	// The field after FROM.

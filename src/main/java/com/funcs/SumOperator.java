@@ -1,5 +1,6 @@
 package com.funcs;
 
+import java.io.Serializable;
 import java.util.logging.Logger;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -13,7 +14,9 @@ import com.utils.QueryParser;
  * Sum operation for the spark online aggregation.
  * @author Qiao Jin
  */
-public class SumOperator implements OnlineAggregationOperation {
+public class SumOperator implements OnlineAggregationOperation, Serializable {
+
+    private static final long serialVersionUID = 4560319402731088883L;
 
     private final static Logger logger = Logger.getLogger(SumOperator.class.getName());
 
@@ -40,7 +43,7 @@ public class SumOperator implements OnlineAggregationOperation {
             public Double call(String s) throws Exception {
                 int columnIndex;
                 try {
-                    columnIndex = Integer.parseInt(group.getColumnIndex());
+                    columnIndex = Integer.parseInt(group.getColumnIndex()) - 1;
                 } catch (Exception e) {
                     logger.severe(String.format("Failed to parse column index %d.", group.getColumnIndex()));
                     // Ingnore the current data row.

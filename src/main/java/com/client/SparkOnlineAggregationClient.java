@@ -57,7 +57,7 @@ public class SparkOnlineAggregationClient implements Closeable {
      */
     public JavaRDD<String> sample(JavaRDD<String> dataSource, boolean withReplacement, double fraction) {
         JavaRDD<String> sampledData = dataSource.sample(withReplacement, fraction);
-        logger.info(String.format("Finish sampling data with fraction of %f%,", fraction * 100));
+        logger.info(String.format("Finish sampling data with fraction of %f%%", fraction * 100));
 
         return sampledData;
     }
@@ -106,17 +106,22 @@ public class SparkOnlineAggregationClient implements Closeable {
         operator.showResult();
 
         return rslt;
-
     }
 
+    /**
+     * Will throw some error once this is executed, which is ignorable.
+     * <p> See https://stackoverflow.com/questions/28362341/error-utils-uncaught-exception-in-thread-sparklistenerbus
+     */
     @Override
     public void close() throws IOException {
         spark.close();
     }
 
     public static void main(String[] args) {
-        SparkOnlineAggregationClient client = new SparkOnlineAggregationClient("");
-        String query = "select sum(R1) from T1" ;
-        client.execQuery(query, 0.5);
+        String inputFilePath = "hdfs://localhost:9000/spark/lineitem.tbl";
+        SparkOnlineAggregationClient client = new SparkOnlineAggregationClient(inputFilePath);
+
+        String query = "select sum(R4) from T1" ;
+        client.execQuery(query, 1);
     }
 }
