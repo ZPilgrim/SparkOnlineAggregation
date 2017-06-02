@@ -21,7 +21,7 @@ public class SparkOnlineAggregationClient {
         OnlineAggregationOperation operator = null;
         Object rslt = null;
 
-        if (query.indexOf(Constants.SUM_TAG) >= 0) {
+        if (query.indexOf(Constants.SUM) >= 0) {
             operator = new SumOperator();
             rslt = (Double) operator.exec(query);
         }
