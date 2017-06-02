@@ -1,12 +1,15 @@
 package com.utils;
 
+import java.io.Serializable;
 import java.util.logging.Logger;
 
 /**
  * Parser engine to understand the semantic of input query, support embedded query with multiple keywords.
  * @author Qiao Jin
  */
-public class QueryParser {
+public class QueryParser implements Serializable {
+	private static final long serialVersionUID = -2020640744674838512L;
+
 	private static final Logger logger = Logger.getLogger(QueryParser.class.getName());
 	
 	// Built-in semantic keywords for online aggregation query.
