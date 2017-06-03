@@ -1,9 +1,11 @@
 package com.funcs;
 
+import java.io.Serializable;
+
 /**
  * Created by zhangweimin on 17/5/15.
  */
-public interface OnlineAggregationOperation {
+public interface OnlineAggregationOperation extends Serializable {
     /**
      * @param cols: the cols which be selected or count() or sum() and so on
      * @param specArgs:extend for special use
