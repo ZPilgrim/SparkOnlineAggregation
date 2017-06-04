@@ -9,6 +9,8 @@ public class Constants {
     public final static int SUM_TYPE = 1;
     public final static int MIN_TYPE = 10;
     public final static int MAX_TYPE = 11;
+    public final static String COUNT = "count";
+    public final static String SUM = "sum";
 
     public final static double ERROR_QUANTILE = -1.0;
     public final static double ERROR_MAXMIN_PREV = -1.0;
