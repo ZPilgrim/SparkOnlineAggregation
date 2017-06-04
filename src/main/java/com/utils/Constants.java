@@ -9,13 +9,14 @@ public class Constants {
     public final static int SUM_TYPE = 1;
     public final static int MIN_TYPE = 10;
     public final static int MAX_TYPE = 11;
-    public final static String COUNT = "count";
-    public final static String SUM = "sum";
 
     public final static double ERROR_QUANTILE = -1.0;
     public final static double ERROR_MAXMIN_PREV = -1.0;
+    public final static int MAX_MIN_LIMIT_SAMPLE_TIME = 10;
 
     public final static String SUM_TAG = "sum";
+    public final static String COUNT = "count";
+    public final static String SUM = "sum";
 
     // SQL key words
     public final static String SELECT = "select";
@@ -23,6 +24,7 @@ public class Constants {
     public final static String WHERE = "where";
     public final static String MAX = "max";
     public final static String MIN = "min";
+    public final static String CONFIDENCE = "confidence";
 
     public final static String COL_PREFIX = "R";
     public final static String SAMPLE = "sample";
@@ -34,6 +36,7 @@ public class Constants {
     public final static String LOCALHOST = "local";
     public final static String LOCAL_HDFS_DOMAIN = "hdfs://localhost:9000";
     public final static String hdfsPathPrefix = "hdfs://localhost:9000";
+    public final static String TABLE_SUFFIX = ".tbl";
 
     // default value
     public final static double DEFAULT_SAMPLE_RATE = 0.4;
