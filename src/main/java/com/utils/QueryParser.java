@@ -4,7 +4,8 @@ import java.io.Serializable;
 import java.util.logging.Logger;
 
 /**
- * Parser engine to understand the semantic of input query, support embedded query with multiple keywords.
+ * Parser engine to understand the semantic of input query, support embedded query with multiple keywords. </br>
+ * The template query format is <b> select avg(R1) from FILE_PATH sample 0.1 confidence 0.95 </b>
  * @author Qiao Jin
  */
 public class QueryParser implements Serializable {
@@ -17,6 +18,8 @@ public class QueryParser implements Serializable {
 	private final static String FROM = "from";
 	private final static String WHERE = "where";
 	private final static String AND = "and";
+	private final static String SAMPLE = "sample";
+	private final static String CONFIDENCE = "confidence";
 	// TODO implement in phase 2.
 	private final static String OR = "or";
 	private final static String GROUP_BY = "group by";
@@ -44,7 +47,8 @@ public class QueryParser implements Serializable {
 			String lowerCasedToken = token.toLowerCase();
 			if (lowerCasedToken.equals(SELECT) || lowerCasedToken.equals(FROM) ||
 				lowerCasedToken.equals(WHERE) || lowerCasedToken.equals(AND) ||
-				lowerCasedToken.equals(OR) || lowerCasedToken.equals(GROUP_BY)) {
+				lowerCasedToken.equals(OR) || lowerCasedToken.equals(GROUP_BY) ||
+				lowerCasedToken.equals(SAMPLE) || lowerCasedToken.equals(CONFIDENCE)) {
 				if (isBuiltInKeyWord) {  // Encounter consecutive built-in keywords, mark it as invalid query.
 					logger.warning("No consecutive built-in keywords ALLOWED in the query!");
 					return null;
@@ -76,6 +80,10 @@ public class QueryParser implements Serializable {
 					group.setSource(token);
 				} else if (previousKeyword.equals(WHERE) || previousKeyword.equals(AND)) {  // clauses.
 					group.addPredicate(token);
+				} else if (previousKeyword.equals(SAMPLE)) {
+					group.setSampleFraction(token);
+				} else if (previousKeyword.equals(CONFIDENCE)) {
+					group.setConfidenceInterval(token);
 				} else if (previousKeyword.equals(OR) || previousKeyword.equals(GROUP_BY)) {  // Implement it in phase 2.
 					// no-op.
 				}

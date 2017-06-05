@@ -18,6 +18,10 @@ public class AttributeGroup implements Serializable {
 	private String source;
 	// The offset of Selected field in each data row.
 	private String columnIndex;
+	// User preferred sampling fraction. The data should fall into the range [0, 1] inclusive.
+	private String sampleFraction;
+	// User preferred confidence interval.
+	private String confidenceInterval; 
 	// All the conditions after WHERE, now we only support 
 	private List<String> predicates = new ArrayList<String>();
 	
@@ -54,6 +58,22 @@ public class AttributeGroup implements Serializable {
 		this.columnIndex = columnIndex;
 	}
 	
+	public String getSampleFraction() {
+		return sampleFraction;
+	}
+
+	public void setSampleFraction(String sampleFraction) {
+		this.sampleFraction = sampleFraction;
+	}
+
+	public String getConfidenceInterval() {
+		return confidenceInterval;
+	}
+
+	public void setConfidenceInterval(String confidenceInterval) {
+		this.confidenceInterval = confidenceInterval;
+	}
+
 	public List<String> getPredicates() {
 		return predicates;
 	}
@@ -64,7 +84,7 @@ public class AttributeGroup implements Serializable {
 	
 	@Override
 	public String toString() {
-		return String.format("{operatorName: %s; source: %s;  columnIndex: %s; predicates: %s}", 
-				operatorName, source, columnIndex, predicates);
+		return String.format("{operatorName: %s; source: %s;  columnIndex: %s; sampleFraction: %s; confidenceInterval: %s; predicates: %s}", 
+				operatorName, source, columnIndex, sampleFraction, confidenceInterval, predicates);
 	}
 }

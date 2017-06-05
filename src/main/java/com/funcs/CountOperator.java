@@ -2,24 +2,29 @@ package com.funcs;
 
 import com.utils.AttributeGroup;
 import com.utils.Constants;
+import com.utils.DataFatcher;
 import com.utils.QueryParser;
 
 import java.util.logging.Logger;
 
 /**
- * Sum operation for the spark online aggregation.
+ * Count operation for spark online aggregation.
  * @author Qiao Jin
  */
-public class SumOperator implements OnlineAggregationOperation {
+public class CountOperator implements OnlineAggregationOperation {
 
-    private final static Logger logger = Logger.getLogger(SumOperator.class.getName());
+	private final static Logger logger = Logger.getLogger(CountOperator.class.getName());
+
+	private final static double DEFAULT_CONFIDENCE = 0.9;
+
+	private QueryParser parser = new QueryParser();
 
     // Spark context.
     private final SparkSession sparkSession;
 
-    private Double lastResult = null;
+    private Long lastResult;
 
-    public SumOperator(String masterEndPoint) {
+    public CountOperator(String masterEndPoint) {
         // Initialize Spark context.
         sparkSession = SparkSession
             .builder()
@@ -29,38 +34,63 @@ public class SumOperator implements OnlineAggregationOperation {
     }
 
     /** Constructor for launching the Spark locally. */
-    public SumOperator() {
+    public CountOperator() {
         this(Constants.LOCALHOST);
     }
 
-
-    public Object exec(String query) {
-        AttributeGroup group = parser.parse(query);
+	@Override
+	public Object exec(String query) {
+		AttributeGroup group = parser.parse(query);
         if (group == null) {
             return null;
         }
 
-        Double rslt = new Double(3.14);
-
-        lastResult = new Double( rslt.doubleValue() );
-
-        return rslt;
-    }
-
-    public void showResult() {
-        logger.info("show sum result:");
-        if (lastResult == null) {
-            System.out.println("No SUM operation executed, result is unavailable!");
-        } else {
-            System.out.println(String.format("The current SUM is: %d", lastResult.longValue())); 
+        double confidence = DEFAULT_CONFIDENCE;
+        try {
+        	confidence = Double.parseDouble(group.getConfidenceInterval());
+        } catch (Exception e) {
+        	logger.warn(String.format("Failed to parse valid confidence interval from input, use default value %f", DEFAULT_CONFIDENCE));
         }
-    }
 
-    //================================================================================
+        double alpha = 1 - confidence;
+        double zp = getNormsinv(alpha / 2 + confidence);
+
+        // Parse all the needed features.
+        String inputFilePath = group.getSource().substring(1, group.getSource().length() - 1);
+        double sampleFraction = Constants.DEFAULT_SAMPLE_RATE;
+        try {
+        	sampleFraction = Double.parseDouble(group.getSampleFraction());
+        } catch (Exception e) {
+        	logger.warn(String.format("Failed to parse valid sample fraction from input, use default value %f", Constants.DEFAULT_SAMPLE_RATE));
+        }
+
+        DataFatcher dataFetcher = new DataFatcher(sparkSession, inputFilePath, sampleFraction, false);
+        if (!dataFetcher.checkInit()) {
+            System.err.println("dataFetcher init error");
+            System.exit(0);
+        }
+
+        
+
+
+		lastResult = Long.valueOf(dataSource.count());
+		return lastResult;
+	}
+
+	@Override
+	public void showResult() {
+		if (lastResult == null) {
+    		System.out.println("No COUNT operation executed, result is unavailable!");
+    	} else {
+    		System.out.println(String.format("The current COUNT is: %d", lastResult.longValue())); 
+    	}
+	}
+
+	//================================================================================
     // Utility APIs.
     //================================================================================
 
-    /**
+	/**
      * Function to compute the Inverse Accumulate distribution function (Normsinv).
      * <p> See <a href=https://www.medcalc.org/manual/normsinv_function.php>Normsinv validation page</a>
      */
