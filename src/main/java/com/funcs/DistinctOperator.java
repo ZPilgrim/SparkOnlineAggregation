@@ -69,6 +69,9 @@ public class DistinctOperator implements OnlineAggregationOperation {
                 parseColIdx(opCol);
                 System.out.println("get col:" + cols[0]);
                 i += 1;
+
+                if (i >= cols.length)
+                    break;
             }
 
             if (cols[i].equalsIgnoreCase(Constants.FROM)) {
@@ -77,10 +80,14 @@ public class DistinctOperator implements OnlineAggregationOperation {
                 this.filePath = cols[i].substring(1, cols[i].length() - 1);
                 logger.finest("set filePath:" + this.filePath);
                 i += 1;
+                if (i >= cols.length)
+                    break;
             }
 
             if (cols[i].equalsIgnoreCase(Constants.SAMPLE)) {
                 i += 1;
+                if (i >= cols.length)
+                    break;
                 cols[i].replace(" ", "");
                 if (StrUtils.isDouble(cols[i])) {
                     this.sampleRate = Double.parseDouble(cols[i]);
@@ -89,10 +96,14 @@ public class DistinctOperator implements OnlineAggregationOperation {
                     return false;
                 }
                 i += 1;
+                if (i >= cols.length)
+                    break;
             }
 
             if (cols[i].equalsIgnoreCase(Constants.CONFIDENCE)) {
                 i += 1;
+                if (i >= cols.length)
+                    break;
                 cols[i].replace(" ", "");
                 if (StrUtils.isDouble(cols[i])) {
                     this.leastQuantile = Double.parseDouble(cols[i]);
@@ -101,6 +112,8 @@ public class DistinctOperator implements OnlineAggregationOperation {
                     return false;
                 }
                 i += 1;
+                if (i >= cols.length)
+                    break;
             }
         }
         return true;

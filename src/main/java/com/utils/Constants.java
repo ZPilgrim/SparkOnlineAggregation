@@ -46,5 +46,5 @@ public class Constants {
     public final static double DEFAULT_SAMPLE_RATE = 0.4;
     public final static int DEFAULT_COL_IDX = 0;
     public final static double LEAST_QUANTILE = 0.95;
-    public final static double LEAST_DISTINCT_QUANTILE = 0.8;
+    public final static double LEAST_DISTINCT_QUANTILE = 0.95;
 }
