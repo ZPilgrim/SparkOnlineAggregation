@@ -2,9 +2,15 @@ package com.funcs;
 
 import com.utils.AttributeGroup;
 import com.utils.Constants;
+import com.utils.DataFatcher;
 import com.utils.QueryParser;
 
 import java.util.logging.Logger;
+
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.sql.SparkSession;
 
 /**
  * Sum operation for the spark online aggregation.
@@ -14,10 +20,19 @@ public class SumOperator implements OnlineAggregationOperation {
 
     private final static Logger logger = Logger.getLogger(SumOperator.class.getName());
 
+    private final static double DEFAULT_CONFIDENCE = 0.9;
+
     // Spark context.
     private final SparkSession sparkSession;
 
-    private Double lastResult = null;
+    private QueryParser parser = new QueryParser();
+
+    private boolean isInterrupted = false;
+
+    // Global display features.
+    private double sum = 0;
+    private double epsilon = 0;
+    private double confidence = DEFAULT_CONFIDENCE;
 
     public SumOperator(String masterEndPoint) {
         // Initialize Spark context.
@@ -33,38 +48,113 @@ public class SumOperator implements OnlineAggregationOperation {
         this(Constants.LOCALHOST);
     }
 
-
     public Object exec(String query) {
-        AttributeGroup group = parser.parse(query);
+        final AttributeGroup group = parser.parse(query);
         if (group == null) {
             return null;
         }
 
-        Double rslt = new Double(3.14);
+        try {
+            confidence = Double.parseDouble(group.getConfidenceInterval());
+        } catch (Exception e) {
+            logger.warning(String.format("Failed to parse valid confidence interval from input, use default value %f", DEFAULT_CONFIDENCE));
+        }
 
-        lastResult = new Double( rslt.doubleValue() );
+        double alpha = 1 - confidence;
+        double zp = getNormsinv(1 - alpha / 2);
 
-        return rslt;
+        // Parse all the needed features.
+        String inputFilePath = group.getSource().substring(1, group.getSource().length() - 1);
+        double sampleFraction = Constants.DEFAULT_SAMPLE_RATE;
+        try {
+            sampleFraction = Double.parseDouble(group.getSampleFraction());
+        } catch (Exception e) {
+            logger.warning(String.format("Failed to parse valid sample fraction from input, use default value %f", Constants.DEFAULT_SAMPLE_RATE));
+        }
+
+        DataFatcher dataFetcher = new DataFatcher(sparkSession, inputFilePath, sampleFraction, false /* not with replacement */);
+        if (!dataFetcher.checkInit()) {
+            System.err.println("dataFetcher init error");
+            System.exit(0);
+        }
+
+        long numOfRecord = 0;
+        double powerSum = 0;
+        // Sample iterations until satisfying the confidence interval or user interruption.
+        while (!isInterrupted) {
+            // Sampling.
+            final JavaRDD<String> sampleRecords = dataFetcher.getNextRDDData();
+
+            if (sampleRecords == null) {
+                break;
+            }
+
+            numOfRecord += sampleRecords.count();
+            double sampleSum = sampleRecords.map(new Function<String, Double>() {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public Double call(String s) throws Exception {
+                    int columnIndex;
+                    try {
+                        columnIndex = Integer.parseInt(group.getColumnIndex());
+                    } catch (Exception e) {
+                        logger.severe(String.format("Failed to parse column index %s.", group.getColumnIndex()));
+                        // Ignore the current data row.
+                        return Double.valueOf(0);
+                    }
+
+                    return Double.parseDouble(s.split("\\|")[columnIndex]);
+                }
+            }).reduce(new Function2<Double, Double, Double>() {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public Double call(Double num1, Double num2) throws Exception {
+                    return num1 + num2;
+                }
+            });
+
+            sum += sampleSum;
+            powerSum += sampleSum * sampleSum;
+
+            // Compute the current global average.
+            double average = sum / (double)numOfRecord;
+
+            // Compute confidence interval.
+            double tn2v = (powerSum - (double)numOfRecord * average * average) / (double)(numOfRecord - 1);
+            epsilon = Math.sqrt(zp * zp * tn2v / numOfRecord);
+
+            // Display the intermediate result.
+            showResult();
+        }
+
+        return Double.valueOf(sum);
     }
 
     public void showResult() {
-        logger.info("show sum result:");
-        if (lastResult == null) {
-            System.out.println("No SUM operation executed, result is unavailable!");
-        } else {
-            System.out.println(String.format("The current SUM is: %d", lastResult.longValue())); 
-        }
+        System.out.println("===================== show SUM result =====================");
+        System.out.println(String.format("Confidence: %f; Current SUM: %f; Confidence Interval: [%f-%f, %f+%f]",
+            confidence, sum, sum, epsilon, sum, epsilon));
     }
 
     //================================================================================
     // Utility APIs.
     //================================================================================
 
+    public void interrupt() {
+        isInterrupted = true;
+    }
+
+    public boolean isInterrupted() {
+        return isInterrupted;
+    }
+
     /**
      * Function to compute the Inverse Accumulate distribution function (Normsinv).
      * <p> See <a href=https://www.medcalc.org/manual/normsinv_function.php>Normsinv validation page</a>
      */
-    public double getNormsinv(double prob) {
+    private double getNormsinv(double prob) {
         double LOW = 0.02425,
                HIGH = 0.97575,
                q, r;

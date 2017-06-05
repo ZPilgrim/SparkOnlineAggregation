@@ -7,6 +7,9 @@ import com.utils.QueryParser;
 
 import java.util.logging.Logger;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.SparkSession;
+
 /**
  * Count operation for spark online aggregation.
  * @author Qiao Jin
@@ -22,7 +25,12 @@ public class CountOperator implements OnlineAggregationOperation {
     // Spark context.
     private final SparkSession sparkSession;
 
-    private Long lastResult;
+    private boolean isInterrupted = false;
+
+    // Global display features.
+    private long numOfRecord = 0;
+    private double epsilon = 0;
+    private double confidence = DEFAULT_CONFIDENCE;
 
     public CountOperator(String masterEndPoint) {
         // Initialize Spark context.
@@ -40,7 +48,7 @@ public class CountOperator implements OnlineAggregationOperation {
 
 	@Override
 	public Object exec(String query) {
-		AttributeGroup group = parser.parse(query);
+		final AttributeGroup group = parser.parse(query);
         if (group == null) {
             return null;
         }
@@ -49,7 +57,7 @@ public class CountOperator implements OnlineAggregationOperation {
         try {
         	confidence = Double.parseDouble(group.getConfidenceInterval());
         } catch (Exception e) {
-        	logger.warn(String.format("Failed to parse valid confidence interval from input, use default value %f", DEFAULT_CONFIDENCE));
+        	logger.warning(String.format("Failed to parse valid confidence interval from input, use default value %f", DEFAULT_CONFIDENCE));
         }
 
         double alpha = 1 - confidence;
@@ -61,40 +69,70 @@ public class CountOperator implements OnlineAggregationOperation {
         try {
         	sampleFraction = Double.parseDouble(group.getSampleFraction());
         } catch (Exception e) {
-        	logger.warn(String.format("Failed to parse valid sample fraction from input, use default value %f", Constants.DEFAULT_SAMPLE_RATE));
+            logger.warning(String.format("Failed to parse valid sample fraction from input, use default value %f", Constants.DEFAULT_SAMPLE_RATE));
         }
 
-        DataFatcher dataFetcher = new DataFatcher(sparkSession, inputFilePath, sampleFraction, false);
+        DataFatcher dataFetcher = new DataFatcher(sparkSession, inputFilePath, sampleFraction, false /* not with replacement */);
         if (!dataFetcher.checkInit()) {
             System.err.println("dataFetcher init error");
             System.exit(0);
         }
 
-        
+        double powerSum = 0,
+               sum = 0;
+        // Sample iterations until satisfying the confidence interval or user interruption.
+		while (!isInterrupted) {
+			 // Sampling.
+            final JavaRDD<String> sampleRecords = dataFetcher.getNextRDDData();
 
+            if (sampleRecords == null) {
+                break;
+            }
 
-		lastResult = Long.valueOf(dataSource.count());
-		return lastResult;
+            numOfRecord += sampleRecords.count();
+            double sampleSum = sampleRecords.count();
+
+            sum += sampleSum;
+            powerSum += sampleSum * sampleSum;
+
+            // Compute the current global average.
+            double average = sum / (double)numOfRecord;
+
+            // Compute confidence interval.
+            double tn2v = (powerSum - (double)numOfRecord * average * average) / (double)(numOfRecord - 1);
+            epsilon = Math.sqrt(zp * zp * tn2v / (double)numOfRecord);
+
+            // Display the intermediate result.
+            showResult();
+		}
+
+		return Long.valueOf(numOfRecord);
 	}
 
 	@Override
 	public void showResult() {
-		if (lastResult == null) {
-    		System.out.println("No COUNT operation executed, result is unavailable!");
-    	} else {
-    		System.out.println(String.format("The current COUNT is: %d", lastResult.longValue())); 
-    	}
+		System.out.println("===================== show COUNT result =====================");
+        System.out.println(String.format("Confidence: %f; Current COUNT: %d; Confidence Interval: [%d-%f, %d+%f]",
+            confidence, numOfRecord, numOfRecord, epsilon, numOfRecord, epsilon));		
 	}
 
 	//================================================================================
-    // Utility APIs.
-    //================================================================================
+	// Utility APIs.
+	//================================================================================
 
-	/**
+	public void interrupt() {
+        isInterrupted = true;
+    }
+
+    public boolean isInterrupted() {
+        return isInterrupted;
+    }
+
+	/*
      * Function to compute the Inverse Accumulate distribution function (Normsinv).
      * <p> See <a href=https://www.medcalc.org/manual/normsinv_function.php>Normsinv validation page</a>
      */
-    public double getNormsinv(double prob) {
+    private double getNormsinv(double prob) {
         double LOW = 0.02425,
                HIGH = 0.97575,
                q, r;

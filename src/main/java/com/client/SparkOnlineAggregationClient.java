@@ -5,6 +5,7 @@ package com.client;
  */
 
 import com.funcs.MaxMinOperator;
+import com.funcs.CountOperator;
 import com.funcs.OnlineAggregationOperation;
 import com.funcs.SumOperator;
 import com.utils.Constants;
@@ -36,6 +37,10 @@ public class SparkOnlineAggregationClient {
 
         if (query.indexOf(Constants.SUM_TAG) >= 0) {
             operator = new SumOperator();
+            rslt = operator.exec(query);
+        }
+        if (query.indexOf(Constants.COUNT) >= 0) {
+            operator = new CountOperator();
             rslt = operator.exec(query);
         }
 
