@@ -4,6 +4,7 @@ package com.client;
  * Created by zhangweimin on 17/5/15.
  */
 
+import com.funcs.DistinctOperator;
 import com.funcs.MaxMinOperator;
 import com.funcs.OnlineAggregationOperation;
 import com.funcs.SumOperator;
@@ -43,6 +44,11 @@ public class SparkOnlineAggregationClient {
         if (query.indexOf(Constants.MAX) >= 0 ||
                 query.indexOf(Constants.MIN) >= 0) {
             operator = new MaxMinOperator();
+            rslt = operator.exec(query);
+        }
+
+        if (query.indexOf(Constants.DISTINCT) >= 0) {
+            operator = new DistinctOperator();
             rslt = operator.exec(query);
         }
 

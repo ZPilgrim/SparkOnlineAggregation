@@ -9,14 +9,18 @@ public class Constants {
     public final static int SUM_TYPE = 1;
     public final static int MIN_TYPE = 10;
     public final static int MAX_TYPE = 11;
+    public final static int DISTINCT_TYPE = 12;
 
     public final static double ERROR_QUANTILE = -1.0;
     public final static double ERROR_MAXMIN_PREV = -1.0;
+    public final static long ERROR_DISTINCT_VALUE = -1;
     public final static int MAX_MIN_LIMIT_SAMPLE_TIME = 10;
+    public final static int DISTINC_LIMIT_SAMPLE_TIME = 10;
 
     public final static String SUM_TAG = "sum";
     public final static String COUNT = "count";
     public final static String SUM = "sum";
+    public final static String DISTINCT = "distinct";
 
     // SQL key words
     public final static String SELECT = "select";
@@ -42,4 +46,5 @@ public class Constants {
     public final static double DEFAULT_SAMPLE_RATE = 0.4;
     public final static int DEFAULT_COL_IDX = 0;
     public final static double LEAST_QUANTILE = 0.95;
+    public final static double LEAST_DISTINCT_QUANTILE = 0.8;
 }
