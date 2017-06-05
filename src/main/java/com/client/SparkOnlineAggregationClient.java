@@ -23,8 +23,8 @@ public class SparkOnlineAggregationClient {
     public static void main(String[] args) {
         logger.setLevel(Level.FINEST);
         SparkOnlineAggregationClient client = new SparkOnlineAggregationClient();
-        String filePath = "/stream/nation.tbl";
-        String query = "select max(R2) from <" + Constants.hdfsPathPrefix + filePath + ">" + " sample " + "0.2" + " confidence " + 0.95;
+
+        String query = args[0];
 
         client.execQuery(query);
     }
