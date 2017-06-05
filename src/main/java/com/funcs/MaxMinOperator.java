@@ -9,6 +9,7 @@ import com.structs.MaxMinResult;
 import com.utils.Constants;
 import com.utils.DataFatcher;
 import com.utils.StrUtils;
+import com.utils.Timer;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
@@ -32,6 +33,7 @@ public class MaxMinOperator implements OnlineAggregationOperation {
     private SparkSession spark = null;
     private String lastSQL = null;
     private double leastQuantile = Constants.LEAST_QUANTILE;
+    private Timer timmer = new Timer();
 
     private boolean parseColIdx(String colName) {
         if (colName == null) return false;
@@ -60,6 +62,7 @@ public class MaxMinOperator implements OnlineAggregationOperation {
             // select
             if (cols[i].equalsIgnoreCase(Constants.SELECT)) {
                 i += 1;
+                if (i >= cols.length) break;
                 cols[i].replace(" ", "");
                 String[] opCols = cols[i].split(",");
                 String opCol = opCols[0];
@@ -78,18 +81,22 @@ public class MaxMinOperator implements OnlineAggregationOperation {
                 parseColIdx(opCol);
                 System.out.println("get col:" + cols[0]);
                 i += 1;
+                if (i >= cols.length) break;
             }
 
             if (cols[i].equalsIgnoreCase(Constants.FROM)) {
                 i += 1;
+                if (i >= cols.length) break;
                 cols[i].replace(" ", "");
                 this.filePath = cols[i].substring(1, cols[i].length() - 1);
                 logger.finest("set filePath:" + this.filePath);
                 i += 1;
+                if (i >= cols.length) break;
             }
 
             if (cols[i].equalsIgnoreCase(Constants.SAMPLE)) {
                 i += 1;
+                if (i >= cols.length) break;
                 cols[i].replace(" ", "");
                 if (StrUtils.isDouble(cols[i])) {
                     this.sampleRate = Double.parseDouble(cols[i]);
@@ -98,10 +105,12 @@ public class MaxMinOperator implements OnlineAggregationOperation {
                     return false;
                 }
                 i += 1;
+                if (i >= cols.length) break;
             }
 
             if (cols[i].equalsIgnoreCase(Constants.CONFIDENCE)) {
                 i += 1;
+                if (i >= cols.length) break;
                 cols[i].replace(" ", "");
                 if (StrUtils.isDouble(cols[i])) {
                     this.leastQuantile = Double.parseDouble(cols[i]);
@@ -110,6 +119,7 @@ public class MaxMinOperator implements OnlineAggregationOperation {
                     return false;
                 }
                 i += 1;
+                if (i >= cols.length) break;
             }
         }
         return true;
@@ -192,20 +202,19 @@ public class MaxMinOperator implements OnlineAggregationOperation {
         double avg = tot_sum1 / (double) cnt;
         double dev = tot_sum2 / (double) cnt - avg * avg;
 
-        System.out.println("Sample avg:" + avg + " dev:" + dev + " cnt:" + cnt);
+//        System.out.println("Sample avg:" + avg + " dev:" + dev + " cnt:" + cnt);
 
         double retQuantile = evaluateResult(avg, dev, cnt, evaluationRes.doubleValue());
 
-        System.out.println("predict v:" + evaluationRes.doubleValue());
-        System.out.println("calQuantile:" + retQuantile);
+//        System.out.println("predict v:" + evaluationRes.doubleValue());
+//        System.out.println("calQuantile:" + retQuantile);
 
         return new MaxMinResult(evaluationRes.doubleValue(), retQuantile, tot_sum1, tot_sum2, cnt);
     }
 
     public Object exec(String query) {
 
-        // TODO: CHECK
-
+        timmer.reset();
         this.spark = SparkSession.builder().master("local").appName("OnlineAggregationOperation").getOrCreate();
         int tryTimes = 0;
         System.out.println("exec query:" + query);
@@ -220,6 +229,8 @@ public class MaxMinOperator implements OnlineAggregationOperation {
             System.err.println("dataFetcher init error");
             return new MaxMinResult(Constants.ERROR_MAXMIN_PREV, Constants.ERROR_QUANTILE);
         }
+
+        timmer.start();
 
         JavaRDD<String> data = dataFetcher.getNextRDDData();
 
@@ -264,6 +275,7 @@ public class MaxMinOperator implements OnlineAggregationOperation {
         System.out.println("   SQL:" + lastSQL);
         System.out.println("   predict v:" + lastResult.getPreV());
         System.out.println("   Quantile:" + lastResult.getQuantile());
+        System.out.println("   Runtime:" + timmer.showTime());
         if (!res) {
             msg = "====== keep try ======";
         } else {

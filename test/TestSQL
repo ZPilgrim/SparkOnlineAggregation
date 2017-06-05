@@ -8,3 +8,11 @@ select distinct(R2) from <hdfs://localhost:9000/stream/lineitem.tbl> confidence 
 select distinct(R2) from <hdfs://localhost:9000/stream/lineitem.tbl>
 select distinct(R2) from <hdfs://localhost:9000/stream/lineitem.tbl>
 select distinct(R2) from <hdfs://localhost:9000/stream/lineitem.tbl> sample 0.2 confidence 0.95
+
+# Max Min
+select max(R2) from <hdfs://localhost:9000/stream/nation.tbl> sample 0.2 confidence 0.95
+select max(R2) from <hdfs://localhost:9000/stream/nation.tbl> sample 0.2
+select max(R2) from <hdfs://localhost:9000/stream/nation.tbl> confidence 0.95
+select max(R2) from <hdfs://localhost:9000/stream/nation.tbl>
+select min(R2) from <hdfs://localhost:9000/stream/nation.tbl>
+select min(R2) from <hdfs://localhost:9000/stream/nation.tbl> sample 0.2 confidence 0.95
