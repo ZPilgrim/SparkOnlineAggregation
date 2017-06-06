@@ -16,3 +16,19 @@ select max(R2) from <hdfs://localhost:9000/stream/nation.tbl> confidence 0.95
 select max(R2) from <hdfs://localhost:9000/stream/nation.tbl>
 select min(R2) from <hdfs://localhost:9000/stream/nation.tbl>
 select min(R2) from <hdfs://localhost:9000/stream/nation.tbl> sample 0.2 confidence 0.95
+
+# Sum
+select sum(R0) from <hdfs://localhost:9000/stream/lineitem.tbl> sample 0.2 confidence 0.95
+select sum(R2) from <hdfs://localhost:9000/stream/lineitem.tbl> sample 0.2
+select sum(R2) from <hdfs://localhost:9000/stream/lineitem.tbl> confidence 0.95
+select sum(R2) from <hdfs://localhost:9000/stream/lineitem.tbl>
+select sum(R2) from <hdfs://localhost:9000/stream/lineitem.tbl>
+select sum(R2) from <hdfs://localhost:9000/stream/lineitem.tbl> sample 0.2 confidence 0.95
+
+# Count
+select count from <hdfs://localhost:9000/stream/lineitem.tbl> sample 0.2 confidence 0.95
+select count from <hdfs://localhost:9000/stream/lineitem.tbl> sample 0.2
+select count from <hdfs://localhost:9000/stream/lineitem.tbl> confidence 0.95
+select count from <hdfs://localhost:9000/stream/lineitem.tbl>
+select count from <hdfs://localhost:9000/stream/lineitem.tbl>
+select count from <hdfs://localhost:9000/stream/lineitem.tbl> sample 0.2 confidence 0.95
