@@ -29,3 +29,11 @@ select max(R2) from <hdfs://localhost:9000/stream/nation.tbl> confidence 0.95
 select max(R2) from <hdfs://localhost:9000/stream/nation.tbl>
 select min(R2) from <hdfs://localhost:9000/stream/nation.tbl>
 select min(R2) from <hdfs://localhost:9000/stream/nation.tbl> sample 0.2 confidence 0.95
+
+# Group By
+select R0,R1 from <hdfs://localhost:9000/stream/lineitem.tbl> group by R0,R1 sample 0.3 confidence 0.8
+select R0,R1 from <hdfs://localhost:9000/stream/lineitem.tbl> group by R0,R1 sample 0.3
+select R0,R1 from <hdfs://localhost:9000/stream/lineitem.tbl> group by R0,R1 confidence 0.8
+select R0,R1,R2 from <hdfs://localhost:9000/stream/lineitem.tbl> group by R0,R1,R2
+select R0,R1,R2 from <hdfs://localhost:9000/stream/lineitem.tbl> group by R0,R1,R2 sample 0.2 confidence 0.85
+

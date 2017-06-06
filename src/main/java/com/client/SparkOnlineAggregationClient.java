@@ -4,11 +4,7 @@ package com.client;
  * Created by zhangweimin on 17/5/15.
  */
 
-import com.funcs.DistinctOperator;
-import com.funcs.MaxMinOperator;
-import com.funcs.CountOperator;
-import com.funcs.OnlineAggregationOperation;
-import com.funcs.SumOperator;
+import com.funcs.*;
 import com.utils.Constants;
 
 import java.util.logging.Level;
@@ -69,6 +65,10 @@ public class SparkOnlineAggregationClient {
 
         if (query.indexOf(Constants.STD) >= 0) {
             operator = new StdOperator();
+            rslt = operator.exec(query);
+        }
+        if(query.indexOf(Constants.GROUPBY) >= 0){
+            operator = new GroupByOperator();
             rslt = operator.exec(query);
         }
 

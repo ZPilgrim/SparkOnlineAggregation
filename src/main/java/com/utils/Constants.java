@@ -32,6 +32,7 @@ public class Constants {
     public final static String MAX = "max";
     public final static String MIN = "min";
     public final static String CONFIDENCE = "confidence";
+    public final static String GROUPBY = "group by";
 
     public final static String COL_PREFIX = "R";
     public final static String SAMPLE = "sample";
@@ -49,6 +50,7 @@ public class Constants {
     public final static double DEFAULT_SAMPLE_RATE = 0.4;
     public final static int DEFAULT_COL_IDX = 0;
     public final static double LEAST_QUANTILE = 0.95;
+    public final static double GROUPBY_LEAST_QUANTILE = 0.7;
     public final static double LEAST_DISTINCT_QUANTILE = 0.95;
     public final static double DEFAULT_CONFIDENCE = 0.95;
 
