@@ -60,7 +60,6 @@ public class CountOperator implements OnlineAggregationOperation {
             return null;
         }
 
-        double confidence = DEFAULT_CONFIDENCE;
         try {
         	confidence = Double.parseDouble(group.getConfidenceInterval());
         } catch (Exception e) {
