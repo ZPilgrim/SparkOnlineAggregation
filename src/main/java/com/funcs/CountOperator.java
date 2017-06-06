@@ -8,33 +8,31 @@ import com.utils.QueryParser;
 import java.util.logging.Logger;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.sql.SparkSession;
 
 /**
- * Sum operation for the spark online aggregation.
+ * Count operation for spark online aggregation.
  * @author Qiao Jin
  */
-public class SumOperator implements OnlineAggregationOperation {
+public class CountOperator implements OnlineAggregationOperation {
 
-    private final static Logger logger = Logger.getLogger(SumOperator.class.getName());
+	private final static Logger logger = Logger.getLogger(CountOperator.class.getName());
 
-    private final static double DEFAULT_CONFIDENCE = 0.9;
+	private final static double DEFAULT_CONFIDENCE = 0.9;
+
+	private QueryParser parser = new QueryParser();
 
     // Spark context.
     private final SparkSession sparkSession;
 
-    private QueryParser parser = new QueryParser();
-
     private boolean isInterrupted = false;
 
     // Global display features.
-    private double sum = 0;
+    private long numOfRecord = 0;
     private double epsilon = 0;
     private double confidence = DEFAULT_CONFIDENCE;
 
-    public SumOperator(String masterEndPoint) {
+    public CountOperator(String masterEndPoint) {
         // Initialize Spark context.
         sparkSession = SparkSession
             .builder()
@@ -44,30 +42,32 @@ public class SumOperator implements OnlineAggregationOperation {
     }
 
     /** Constructor for launching the Spark locally. */
-    public SumOperator() {
+    public CountOperator() {
         this(Constants.LOCALHOST);
     }
 
-    public Object exec(String query) {
-        final AttributeGroup group = parser.parse(query);
+	@Override
+	public Object exec(String query) {
+		final AttributeGroup group = parser.parse(query);
         if (group == null) {
             return null;
         }
 
+        double confidence = DEFAULT_CONFIDENCE;
         try {
-            confidence = Double.parseDouble(group.getConfidenceInterval());
+        	confidence = Double.parseDouble(group.getConfidenceInterval());
         } catch (Exception e) {
-            logger.warning(String.format("Failed to parse valid confidence interval from input, use default value %f", DEFAULT_CONFIDENCE));
+        	logger.warning(String.format("Failed to parse valid confidence interval from input, use default value %f", DEFAULT_CONFIDENCE));
         }
 
         double alpha = 1 - confidence;
-        double zp = getNormsinv(1 - alpha / 2);
+        double zp = getNormsinv(alpha / 2 + confidence);
 
         // Parse all the needed features.
         String inputFilePath = group.getSource().substring(1, group.getSource().length() - 1);
         double sampleFraction = Constants.DEFAULT_SAMPLE_RATE;
         try {
-            sampleFraction = Double.parseDouble(group.getSampleFraction());
+        	sampleFraction = Double.parseDouble(group.getSampleFraction());
         } catch (Exception e) {
             logger.warning(String.format("Failed to parse valid sample fraction from input, use default value %f", Constants.DEFAULT_SAMPLE_RATE));
         }
@@ -78,11 +78,11 @@ public class SumOperator implements OnlineAggregationOperation {
             System.exit(0);
         }
 
-        long numOfRecord = 0;
-        double powerSum = 0;
+        double powerSum = 0,
+               sum = 0;
         // Sample iterations until satisfying the confidence interval or user interruption.
-        while (!isInterrupted) {
-            // Sampling.
+		while (!isInterrupted) {
+			 // Sampling.
             final JavaRDD<String> sampleRecords = dataFetcher.getNextRDDData();
 
             if (sampleRecords == null) {
@@ -90,30 +90,7 @@ public class SumOperator implements OnlineAggregationOperation {
             }
 
             numOfRecord += sampleRecords.count();
-            double sampleSum = sampleRecords.map(new Function<String, Double>() {
-                private static final long serialVersionUID = 1L;
-
-                @Override
-                public Double call(String s) throws Exception {
-                    int columnIndex;
-                    try {
-                        columnIndex = Integer.parseInt(group.getColumnIndex());
-                    } catch (Exception e) {
-                        logger.severe(String.format("Failed to parse column index %s.", group.getColumnIndex()));
-                        // Ignore the current data row.
-                        return Double.valueOf(0);
-                    }
-
-                    return Double.parseDouble(s.split("\\|")[columnIndex]);
-                }
-            }).reduce(new Function2<Double, Double, Double>() {
-                private static final long serialVersionUID = 1L;
-
-                @Override
-                public Double call(Double num1, Double num2) throws Exception {
-                    return num1 + num2;
-                }
-            });
+            double sampleSum = sampleRecords.count();
 
             sum += sampleSum;
             powerSum += sampleSum * sampleSum;
@@ -123,26 +100,27 @@ public class SumOperator implements OnlineAggregationOperation {
 
             // Compute confidence interval.
             double tn2v = (powerSum - (double)numOfRecord * average * average) / (double)(numOfRecord - 1);
-            epsilon = Math.sqrt(zp * zp * tn2v / numOfRecord);
+            epsilon = Math.sqrt(zp * zp * tn2v / (double)numOfRecord);
 
             // Display the intermediate result.
             showResult();
-        }
+		}
 
-        return Double.valueOf(sum);
-    }
+		return Long.valueOf(numOfRecord);
+	}
 
-    public void showResult() {
-        System.out.println("===================== show SUM result =====================");
-        System.out.println(String.format("Confidence: %f; Current SUM: %f; Confidence Interval: [%f-%f, %f+%f]",
-            confidence, sum, sum, epsilon, sum, epsilon));
-    }
+	@Override
+	public void showResult() {
+		System.out.println("===================== show COUNT result =====================");
+        System.out.println(String.format("Confidence: %f; Current COUNT: %d; Confidence Interval: [%d-%f, %d+%f]",
+            confidence, numOfRecord, numOfRecord, epsilon, numOfRecord, epsilon));		
+	}
 
-    //================================================================================
-    // Utility APIs.
-    //================================================================================
+	//================================================================================
+	// Utility APIs.
+	//================================================================================
 
-    public void interrupt() {
+	public void interrupt() {
         isInterrupted = true;
     }
 
@@ -150,7 +128,7 @@ public class SumOperator implements OnlineAggregationOperation {
         return isInterrupted;
     }
 
-    /**
+	/*
      * Function to compute the Inverse Accumulate distribution function (Normsinv).
      * <p> See <a href=https://www.medcalc.org/manual/normsinv_function.php>Normsinv validation page</a>
      */
