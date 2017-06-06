@@ -37,3 +37,18 @@ select R0,R1 from <hdfs://localhost:9000/stream/lineitem.tbl> group by R0,R1 con
 select R0,R1,R2 from <hdfs://localhost:9000/stream/lineitem.tbl> group by R0,R1,R2
 select R0,R1,R2 from <hdfs://localhost:9000/stream/lineitem.tbl> group by R0,R1,R2 sample 0.2 confidence 0.85
 
+# Sum
+select sum(R0) from <hdfs://localhost:9000/stream/lineitem.tbl> sample 0.2 confidence 0.95
+select sum(R2) from <hdfs://localhost:9000/stream/lineitem.tbl> sample 0.2
+select sum(R2) from <hdfs://localhost:9000/stream/lineitem.tbl> confidence 0.95
+select sum(R2) from <hdfs://localhost:9000/stream/lineitem.tbl>
+select sum(R2) from <hdfs://localhost:9000/stream/lineitem.tbl>
+select sum(R2) from <hdfs://localhost:9000/stream/lineitem.tbl> sample 0.2 confidence 0.95
+
+# Count
+select count from <hdfs://localhost:9000/stream/lineitem.tbl> sample 0.2 confidence 0.95
+select count from <hdfs://localhost:9000/stream/lineitem.tbl> sample 0.2
+select count from <hdfs://localhost:9000/stream/lineitem.tbl> confidence 0.95
+select count from <hdfs://localhost:9000/stream/lineitem.tbl>
+select count from <hdfs://localhost:9000/stream/lineitem.tbl>
+select count from <hdfs://localhost:9000/stream/lineitem.tbl> sample 0.2 confidence 0.95

@@ -4,6 +4,7 @@ import com.utils.AttributeGroup;
 import com.utils.Constants;
 import com.utils.DataFatcher;
 import com.utils.QueryParser;
+import com.utils.Timer;
 
 import java.util.logging.Logger;
 
@@ -32,6 +33,9 @@ public class CountOperator implements OnlineAggregationOperation {
     private double epsilon = 0;
     private double confidence = DEFAULT_CONFIDENCE;
 
+    // Timer object.
+    private Timer timer = new Timer();
+
     public CountOperator(String masterEndPoint) {
         // Initialize Spark context.
         sparkSession = SparkSession
@@ -48,6 +52,9 @@ public class CountOperator implements OnlineAggregationOperation {
 
 	@Override
 	public Object exec(String query) {
+        // Reset the timer.
+        timer.reset();
+
 		final AttributeGroup group = parser.parse(query);
         if (group == null) {
             return null;
@@ -77,6 +84,8 @@ public class CountOperator implements OnlineAggregationOperation {
             System.err.println("dataFetcher init error");
             System.exit(0);
         }
+
+        timer.start();
 
         double powerSum = 0,
                sum = 0;
@@ -112,8 +121,8 @@ public class CountOperator implements OnlineAggregationOperation {
 	@Override
 	public void showResult() {
 		System.out.println("===================== show COUNT result =====================");
-        System.out.println(String.format("Confidence: %f; Current COUNT: %d; Confidence Interval: [%d-%f, %d+%f]",
-            confidence, numOfRecord, numOfRecord, epsilon, numOfRecord, epsilon));		
+        System.out.println(String.format("Confidence: %f; Current COUNT: %d; Confidence Interval: [%d-%f, %d+%f]; duration: %s",
+            confidence, numOfRecord, numOfRecord, epsilon, numOfRecord, epsilon, timer.showTime()));
 	}
 
 	//================================================================================
