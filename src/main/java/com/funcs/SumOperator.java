@@ -4,6 +4,7 @@ import com.utils.AttributeGroup;
 import com.utils.Constants;
 import com.utils.DataFatcher;
 import com.utils.QueryParser;
+import com.utils.Timer;
 
 import java.util.logging.Logger;
 
@@ -33,6 +34,8 @@ public class SumOperator implements OnlineAggregationOperation {
     private double sum = 0;
     private double epsilon = 0;
     private double confidence = DEFAULT_CONFIDENCE;
+    // Timer object.
+    private Timer timer = new Timer();
 
     public SumOperator(String masterEndPoint) {
         // Initialize Spark context.
@@ -49,6 +52,8 @@ public class SumOperator implements OnlineAggregationOperation {
     }
 
     public Object exec(String query) {
+        // Reset the timer.
+        timer.reset();
         final AttributeGroup group = parser.parse(query);
         if (group == null) {
             return null;
@@ -77,6 +82,8 @@ public class SumOperator implements OnlineAggregationOperation {
             System.err.println("dataFetcher init error");
             System.exit(0);
         }
+
+        timer.start();
 
         long numOfRecord = 0;
         double powerSum = 0;
@@ -134,8 +141,8 @@ public class SumOperator implements OnlineAggregationOperation {
 
     public void showResult() {
         System.out.println("===================== show SUM result =====================");
-        System.out.println(String.format("Confidence: %f; Current SUM: %f; Confidence Interval: [%f-%f, %f+%f]",
-            confidence, sum, sum, epsilon, sum, epsilon));
+        System.out.println(String.format("Confidence: %f; Current SUM: %f; Confidence Interval: [%f-%f, %f+%f]; duration: %s",
+            confidence, sum, sum, epsilon, sum, epsilon, timer.showTime()));
     }
 
     //================================================================================
