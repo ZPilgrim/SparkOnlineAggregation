@@ -1,5 +1,18 @@
-# Example
+﻿# Example
 spark-submit --class com.client.SparkOnlineAggregationClient spark-online-aggregation-1.0-SNAPSHOT-jar-with-dependencies.jar "select max(R2) from <hdfs://localhost:9000/stream/nation.tbl> sample 0.2 confidence 0.95"
+
+# Avg Var Std
+select avg(R2) from <hdfs://localhost:9000/stream/nation.tbl> sample 0.2 confidence 0.95
+select avg(R2) from <hdfs://localhost:9000/stream/nation.tbl> sample 0.2
+select avg(R2) from <hdfs://localhost:9000/stream/nation.tbl> confidence 0.95
+select avg(R2) from <hdfs://localhost:9000/stream/nation.tbl>
+select var(R2) from <hdfs://localhost:9000/stream/nation.tbl>
+select var(R2) from <hdfs://localhost:9000/stream/nation.tbl> sample 0.2 confidence 0.95
+select std(R2) from <hdfs://localhost:9000/stream/nation.tbl>
+select std(R2) from <hdfs://localhost:9000/stream/nation.tbl> sample 0.2 confidence 0.95
+select avg(R2) from <hdfs://localhost:9000/lineitem/lineitem.tbl>
+select var(R2) from <hdfs://localhost:9000/lineitem/lineitem.tbl>
+select std(R2) from <hdfs://localhost:9000/lineitem/lineitem.tbl>
 
 # Distinct
 select distinct(R0) from <hdfs://localhost:9000/stream/lineitem.tbl> sample 0.2 confidence 0.95

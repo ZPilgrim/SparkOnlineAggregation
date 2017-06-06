@@ -57,6 +57,21 @@ public class SparkOnlineAggregationClient {
             rslt = operator.exec(query);
         }
 
+        if (query.indexOf(Constants.AVG) >= 0) {
+            operator = new AvgOperator();
+            rslt = operator.exec(query);
+        }
+
+        if (query.indexOf(Constants.VAR) >= 0) {
+            operator = new VarOperator();
+            rslt = operator.exec(query);
+        }
+
+        if (query.indexOf(Constants.STD) >= 0) {
+            operator = new StdOperator();
+            rslt = operator.exec(query);
+        }
+
         if (operator != null) {
             operator.showResult();
         }

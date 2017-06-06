@@ -21,6 +21,9 @@ public class Constants {
     public final static String COUNT = "count";
     public final static String SUM = "sum";
     public final static String DISTINCT = "distinct";
+    public final static String AVG = "avg";
+    public final static String VAR = "var";
+    public final static String STD = "std";
 
     // SQL key words
     public final static String SELECT = "select";
@@ -47,4 +50,6 @@ public class Constants {
     public final static int DEFAULT_COL_IDX = 0;
     public final static double LEAST_QUANTILE = 0.95;
     public final static double LEAST_DISTINCT_QUANTILE = 0.95;
+    public final static double DEFAULT_CONFIDENCE = 0.95;
+
 }
